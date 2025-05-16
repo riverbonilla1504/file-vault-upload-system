@@ -40,8 +40,17 @@ export const createFileSpace = async (
     }
 
     const data = await response.json() as CreateFileResponse;
-    // Clean the URL - remove quotes and any wrapping characters
-    const uploadUrl = data.body.replace(/"/g, '').trim();
+    
+    // The API returns a response where the URL is in the body property as a string
+    // But the string itself might contain "{url:actualUrl}" format
+    // We need to extract the actual URL
+    let uploadUrl = data.body.replace(/"/g, '').trim();
+    
+    // Check if the URL is in the format "{url:actualUrl}" and extract the actual URL
+    if (uploadUrl.startsWith('{url:')) {
+      uploadUrl = uploadUrl.substring(5, uploadUrl.length - 1);
+    }
+    
     console.log(`Got upload URL: ${uploadUrl}`);
     return uploadUrl;
   } catch (error) {
