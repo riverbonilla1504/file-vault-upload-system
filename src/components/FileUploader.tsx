@@ -46,6 +46,11 @@ const FileUploader = () => {
         return;
       }
 
+      toast({
+        title: "Procesando",
+        description: "Creando espacio para el archivo..."
+      });
+
       // Paso 1: Crear espacio para el archivo
       const uploadUrl = await createFileSpace(
         asignatura,
@@ -53,12 +58,17 @@ const FileUploader = () => {
         selectedFile.type
       );
       
+      toast({
+        title: "Procesando",
+        description: "Subiendo archivo..."
+      });
+      
       // Paso 2: Subir el archivo
       await uploadFile(uploadUrl, selectedFile, selectedFile.type);
       
       toast({
         title: "Éxito",
-        description: `El archivo ${selectedFile.name} se subió correctamente`,
+        description: `El archivo ${selectedFile.name} se subió correctamente a ${asignatura}`,
       });
       
       // Limpiar el formulario
@@ -67,12 +77,12 @@ const FileUploader = () => {
       if (fileInput) fileInput.value = '';
       
     } catch (error) {
+      console.error("Error completo:", error);
       toast({
         title: "Error",
-        description: "No se pudo subir el archivo",
+        description: error instanceof Error ? error.message : "No se pudo subir el archivo",
         variant: "destructive"
       });
-      console.error(error);
     } finally {
       setIsLoading(false);
     }

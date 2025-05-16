@@ -18,6 +18,8 @@ export const createFileSpace = async (
   tipo_contenido: string
 ): Promise<string> => {
   try {
+    console.log(`Creating file space for: ${asignatura}/${nombre_archivo} (${tipo_contenido})`);
+    
     const response = await fetch('https://tbk7w2ivb0.execute-api.us-east-2.amazonaws.com/dev/', {
       method: 'POST',
       headers: {
@@ -32,11 +34,15 @@ export const createFileSpace = async (
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API returned status ${response.status}: ${errorText}`);
       throw new Error(`Error en la creación del espacio: ${response.status}`);
     }
 
     const data = await response.json() as CreateFileResponse;
-    return data.body.replace(/"/g, ''); // Elimina comillas de la URL
+    const uploadUrl = data.body.replace(/"/g, ''); // Elimina comillas de la URL
+    console.log(`Got upload URL: ${uploadUrl}`);
+    return uploadUrl;
   } catch (error) {
     console.error('Error creando el espacio para el archivo:', error);
     throw error;
@@ -45,17 +51,27 @@ export const createFileSpace = async (
 
 export const uploadFile = async (url: string, file: File, contentType: string): Promise<void> => {
   try {
+    console.log(`Uploading file to ${url}`);
+    console.log(`File type: ${file.type}, Size: ${file.size} bytes, Content-Type header: ${contentType}`);
+    
+    // Create a binary blob with the correct content type
+    const blob = new Blob([await file.arrayBuffer()], { type: contentType });
+    
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': contentType
       },
-      body: file
+      body: blob
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Upload failed with status ${response.status}: ${errorText}`);
       throw new Error(`Error al subir el archivo: ${response.status}`);
     }
+    
+    console.log('File uploaded successfully');
   } catch (error) {
     console.error('Error subiendo el archivo:', error);
     throw error;
