@@ -40,7 +40,8 @@ export const createFileSpace = async (
     }
 
     const data = await response.json() as CreateFileResponse;
-    const uploadUrl = data.body.replace(/"/g, ''); // Elimina comillas de la URL
+    // Clean the URL - remove quotes and any wrapping characters
+    const uploadUrl = data.body.replace(/"/g, '').trim();
     console.log(`Got upload URL: ${uploadUrl}`);
     return uploadUrl;
   } catch (error) {
@@ -51,11 +52,19 @@ export const createFileSpace = async (
 
 export const uploadFile = async (url: string, file: File, contentType: string): Promise<void> => {
   try {
+    // Make sure the URL is properly formatted
+    if (!url.startsWith('http')) {
+      throw new Error('URL inválida para subir el archivo');
+    }
+    
     console.log(`Uploading file to ${url}`);
     console.log(`File type: ${file.type}, Size: ${file.size} bytes, Content-Type header: ${contentType}`);
     
+    // Read the file as an ArrayBuffer first
+    const fileBuffer = await file.arrayBuffer();
+    
     // Create a binary blob with the correct content type
-    const blob = new Blob([await file.arrayBuffer()], { type: contentType });
+    const blob = new Blob([fileBuffer], { type: contentType });
     
     const response = await fetch(url, {
       method: 'PUT',
@@ -116,6 +125,39 @@ export const getDownloadUrl = async (asignatura: string, archivo: string): Promi
     return data.url;
   } catch (error) {
     console.error('Error obteniendo URL de descarga:', error);
+    throw error;
+  }
+};
+
+export const downloadFile = async (url: string, fileName: string): Promise<void> => {
+  try {
+    console.log(`Downloading file from ${url}`);
+    
+    // Fetch the file as a blob
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error al descargar el archivo: ${response.status}`);
+    }
+    
+    // Convert to a blob
+    const blob = await response.blob();
+    
+    // Create a temporary download link
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = fileName;
+    
+    // Append to body, trigger click to download, and clean up
+    document.body.appendChild(link);
+    link.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(link);
+    
+    console.log('File download successful');
+  } catch (error) {
+    console.error('Error descargando el archivo:', error);
     throw error;
   }
 };

@@ -58,6 +58,10 @@ const FileUploader = () => {
         selectedFile.type
       );
       
+      if (!uploadUrl || !uploadUrl.startsWith('http')) {
+        throw new Error("La URL de subida es inválida");
+      }
+      
       toast({
         title: "Procesando",
         description: "Subiendo archivo..."

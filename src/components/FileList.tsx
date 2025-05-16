@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { listFiles, getDownloadUrl } from '@/services/fileService';
-import { FileInput } from 'lucide-react';
+import { listFiles, getDownloadUrl, downloadFile } from '@/services/fileService';
+import { Download } from 'lucide-react';
 
 const asignaturas = ["matematicas", "fisica", "quimica", "biologia", "historia"];
 
@@ -45,22 +45,22 @@ const FileList = () => {
       setDownloadLoading(fileName);
       const downloadUrl = await getDownloadUrl(asignatura, fileName);
       
-      // Crear un enlace oculto y hacer clic en él para descargar el archivo
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      toast({
+        title: "Descargando",
+        description: `Descargando ${fileName}...`
+      });
+      
+      // Usar la nueva función para descargar directamente
+      await downloadFile(downloadUrl, fileName);
       
       toast({
-        title: "Descarga iniciada",
-        description: `El archivo ${fileName} se está descargando`
+        title: "Éxito",
+        description: `El archivo ${fileName} se ha descargado correctamente`
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo descargar el archivo",
+        description: error instanceof Error ? error.message : "No se pudo descargar el archivo",
         variant: "destructive"
       });
       console.error(error);
@@ -105,7 +105,7 @@ const FileList = () => {
                 {files.map((file) => (
                   <li key={file} className="p-4 flex items-center justify-between">
                     <div className="flex items-center">
-                      <FileInput className="h-5 w-5 text-blue-500 mr-2" />
+                      <Download className="h-5 w-5 text-blue-500 mr-2" />
                       <span>{file}</span>
                     </div>
                     <Button 
